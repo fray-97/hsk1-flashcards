@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSK 1 Mandarin Flashcards</title>
+<style>
+  :root {
+    --primary: #e74c3c;
+    --primary-dark: #c0392b;
+    --secondary: #f39c12;
+    --bg: #f5f6fa;
+    --card-bg: #ffffff;
+    --text: #2c3e50;
+    --text-light: #7f8c8d;
+    --success: #27ae60;
+    --danger: #e74c3c;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+  header p { opacity: 0.9; font-size: 0.95rem; }
+
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .settings-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 16px;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .setting {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle-switch.active { background: var(--primary); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle-switch.active::after { transform: translateX(18px); }
+
+  .mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .mode-tab {
+    padding: 10px 24px;
+    border: 2px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+
+  .mode-tab.active, .mode-tab:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  .container {
+    flex: 1;
+    max-width: 700px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* Flashcard Mode */
+  .flashcard-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .flashcard-wrapper {
+    perspective: 1000px;
+    width: 100%;
+    max-width: 400px;
+    height: 280px;
+    cursor: pointer;
+  }
+
+  .flashcard {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .flashcard.flipped {
+    transform: rotateY(180deg);
+  }
+
+  .flashcard-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    background: var(--card-bg);
+    padding: 24px;
+  }
+
+  .flashcard-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, #fff5f5, #fff);
+  }
+
+  .char-display {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 8px;
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .pinyin-display {
+    font-size: 1.5rem;
+    color: var(--secondary);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .meaning-display {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    text-align: center;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: #bbb;
+    margin-top: 12px;
+  }
+
+  .card-nav {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .nav-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+  .nav-btn:disabled { background: #ddd; cursor: not-allowed; transform: none; }
+
+  .audio-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .audio-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.05);
+  }
+
+  .audio-btn.playing {
+    animation: pulse 1s infinite;
+    background: var(--primary);
+    color: white;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .quiz-audio-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .quiz-type-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .quiz-type-btn {
+    padding: 6px 14px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+
+  .quiz-type-btn.active, .quiz-type-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .listen-indicator {
+    font-size: 3rem;
+    color: var(--primary);
+    animation: pulse 1.5s infinite;
+    margin: 20px 0;
+  }
+
+  .card-counter {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .difficulty-btns {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .diff-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .diff-btn.hard { background: #ffebee; color: var(--danger); }
+  .diff-btn.hard:hover { background: var(--danger); color: white; }
+  .diff-btn.easy { background: #e8f5e9; color: var(--success); }
+  .diff-btn.easy:hover { background: var(--success); color: white; }
+
+  /* Quiz Mode */
+  .quiz-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .quiz-question {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 20px 0;
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .quiz-hint {
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+
+  .quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .quiz-option {
+    padding: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+
+  .quiz-option:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .quiz-option.correct {
+    border-color: var(--success);
+    background: #e8f5e9;
+  }
+
+  .quiz-option.wrong {
+    border-color: var(--danger);
+    background: #ffebee;
+  }
+
+  .quiz-option.disabled {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .quiz-feedback {
+    font-size: 1.1rem;
+    font-weight: 600;
+    min-height: 28px;
+  }
+
+  .quiz-feedback.correct { color: var(--success); }
+  .quiz-feedback.wrong { color: var(--danger); }
+
+  .next-btn {
+    padding: 12px 36px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+  }
+
+  .next-btn:hover { background: var(--primary-dark); }
+
+  /* Browse Mode */
+  .browse-area {
+    display: none;
+  }
+
+  .category-filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+
+  .cat-btn {
+    padding: 6px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .cat-btn.active, .cat-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .word-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .word-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .word-card .w-char {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .word-card .w-pinyin {
+    font-size: 0.9rem;
+    color: var(--secondary);
+    margin: 4px 0;
+  }
+
+  .word-card .w-meaning {
+    font-size: 0.8rem;
+    color: var(--text-light);
+  }
+
+  .word-card .w-meaning.hidden {
+    filter: blur(4px);
+    user-select: none;
+  }
+
+  /* Progress bar */
+  .progress-container {
+    width: 100%;
+    max-width: 400px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 8px;
+    margin: 8px 0;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.3s;
+    border-radius: 10px;
+  }
+
+  /* Results */
+  .results-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 40px 24px;
+  }
+
+  .results-area h2 { font-size: 2rem; color: var(--primary); }
+  .score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .restart-btn {
+    padding: 12px 36px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    background: white;
+    border-top: 1px solid #eee;
+  }
+
+  @media (max-width: 480px) {
+    .char-display { font-size: 3rem; }
+    .flashcard-wrapper { height: 240px; }
+    .quiz-options { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>HSK 1 Mandarin Flashcards</h1>
+  <p>Master the 150 essential HSK 1 vocabulary words</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-value" id="totalWords">150</div>
+    <div class="stat-label">Total Words</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="learnedWords">0</div>
+    <div class="stat-label">Learned</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="quizScore">0%</div>
+    <div class="stat-label">Quiz Score</div>
+  </div>
+</div>
+
+<div class="settings-bar">
+  <div class="setting">
+    <div class="toggle-switch active" id="autoAudioToggle" onclick="toggleAutoAudio()"></div>
+    <span>Auto-play audio</span>
+  </div>
+  <div class="setting">
+    <div class="toggle-switch" id="slowAudioToggle" onclick="toggleSlowAudio()"></div>
+    <span>Slow speed</span>
+  </div>
+</div>
+
+<div class="mode-tabs">
+  <button class="mode-tab active" onclick="setMode('flashcard')">Flashcards</button>
+  <button class="mode-tab" onclick="setMode('quiz')">Quiz</button>
+  <button class="mode-tab" onclick="setMode('listen')">Listen</button>
+  <button class="mode-tab" onclick="setMode('browse')">Browse</button>
+</div>
+
+<div class="container">
+
+  <!-- Flashcard Mode -->
+  <div class="flashcard-area" id="flashcardArea">
+    <div class="flashcard-wrapper" onclick="flipCard()">
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-face flashcard-front">
+          <div class="char-display" id="fcChar">一</div>
+          <button class="audio-btn" id="fcAudioFront" onclick="playCurrentCard(event)" title="Play pronunciation">&#128266;</button>
+          <div class="hint">Tap card to flip</div>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <div class="char-display" id="fcCharBack">一</div>
+          <div class="pinyin-display" id="fcPinyin">yī</div>
+          <div class="meaning-display" id="fcMeaning">one</div>
+          <button class="audio-btn" id="fcAudioBack" onclick="playCurrentCard(event)" title="Play pronunciation">&#128266;</button>
+        </div>
+      </div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar" id="fcProgress" style="width: 0%"></div>
+    </div>
+    <div class="card-nav">
+      <button class="nav-btn" onclick="prevCard(event)">&#9664;</button>
+      <span class="card-counter" id="fcCounter">1 / 150</span>
+      <button class="nav-btn" onclick="nextCard(event)">&#9654;</button>
+    </div>
+    <div class="difficulty-btns">
+      <button class="diff-btn hard" onclick="markCard('hard', event)">Still Learning</button>
+      <button class="diff-btn easy" onclick="markCard('easy', event)">Got It!</button>
+    </div>
+  </div>
+
+  <!-- Quiz Mode -->
+  <div class="quiz-area" id="quizArea">
+    <div class="quiz-type-selector">
+      <button class="quiz-type-btn active" onclick="setQuizType('visual', event)">Visual Quiz</button>
+      <button class="quiz-type-btn" onclick="setQuizType('listen', event)">Listening Quiz</button>
+    </div>
+    <div class="quiz-hint" id="quizHint">What does this character mean?</div>
+    <div class="quiz-question" id="quizQuestion">一</div>
+    <div class="quiz-audio-bar">
+      <button class="audio-btn" id="quizAudioBtn" onclick="playQuizWord(event)" title="Play pronunciation">&#128266;</button>
+    </div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuiz()">Next Question</button>
+    <div class="progress-container">
+      <div class="progress-bar" id="quizProgress" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- Listen Mode -->
+  <div class="quiz-area" id="listenArea" style="display:none;">
+    <div class="quiz-hint">Listen and select the meaning</div>
+    <div class="listen-indicator" id="listenIndicator">&#127911;</div>
+    <div class="quiz-audio-bar" style="justify-content:center;">
+      <button class="audio-btn" id="listenAudioBtn" onclick="playListenWord(event)" title="Play again" style="width:56px;height:56px;font-size:1.4rem;">&#128266;</button>
+    </div>
+    <div class="quiz-options" id="listenOptions"></div>
+    <div class="quiz-feedback" id="listenFeedback"></div>
+    <button class="next-btn" id="listenNextBtn" onclick="nextListen()">Next Question</button>
+    <div class="progress-container">
+      <div class="progress-bar" id="listenProgress" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-area" id="resultsArea">
+    <h2>Quiz Complete!</h2>
+    <div class="score-circle" id="scoreCircle">0%</div>
+    <p id="resultsText">You answered 0 out of 10 correctly.</p>
+    <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
+  </div>
+
+  <!-- Browse Mode -->
+  <div class="browse-area" id="browseArea">
+    <div class="category-filter" id="categoryFilter"></div>
+    <div class="word-grid" id="wordGrid"></div>
+  </div>
+
+</div>
+
+<footer>HSK 1 Flashcard Quiz &mdash; Happy Learning!</footer>
+
+<script>
+// HSK 1 Vocabulary (150 words)
+const hsk1 = [
+  { char: "一", pinyin: "yī", meaning: "one", category: "Numbers" },
+  { char: "二", pinyin: "èr", meaning: "two", category: "Numbers" },
+  { char: "三", pinyin: "sān", meaning: "three", category: "Numbers" },
+  { char: "四", pinyin: "sì", meaning: "four", category: "Numbers" },
+  { char: "五", pinyin: "wǔ", meaning: "five", category: "Numbers" },
+  { char: "六", pinyin: "liù", meaning: "six", category: "Numbers" },
+  { char: "七", pinyin: "qī", meaning: "seven", category: "Numbers" },
+  { char: "八", pinyin: "bā", meaning: "eight", category: "Numbers" },
+  { char: "九", pinyin: "jiǔ", meaning: "nine", category: "Numbers" },
+  { char: "十", pinyin: "shí", meaning: "ten", category: "Numbers" },
+  { char: "零", pinyin: "líng", meaning: "zero", category: "Numbers" },
+  { char: "百", pinyin: "bǎi", meaning: "hundred", category: "Numbers" },
+  { char: "千", pinyin: "qiān", meaning: "thousand", category: "Numbers" },
+  { char: "两", pinyin: "liǎng", meaning: "two (measure word)", category: "Numbers" },
+  { char: "半", pinyin: "bàn", meaning: "half", category: "Numbers" },
+  { char: "我", pinyin: "wǒ", meaning: "I, me", category: "Pronouns" },
+  { char: "你", pinyin: "nǐ", meaning: "you", category: "Pronouns" },
+  { char: "他", pinyin: "tā", meaning: "he, him", category: "Pronouns" },
+  { char: "她", pinyin: "tā", meaning: "she, her", category: "Pronouns" },
+  { char: "我们", pinyin: "wǒmen", meaning: "we, us", category: "Pronouns" },
+  { char: "这", pinyin: "zhè", meaning: "this", category: "Pronouns" },
+  { char: "那", pinyin: "nà", meaning: "that", category: "Pronouns" },
+  { char: "哪", pinyin: "nǎ", meaning: "which", category: "Pronouns" },
+  { char: "什么", pinyin: "shénme", meaning: "what", category: "Pronouns" },
+  { char: "谁", pinyin: "shuí", meaning: "who", category: "Pronouns" },
+  { char: "几", pinyin: "jǐ", meaning: "how many", category: "Pronouns" },
+  { char: "怎么", pinyin: "zěnme", meaning: "how", category: "Pronouns" },
+  { char: "多少", pinyin: "duōshao", meaning: "how much/many", category: "Pronouns" },
+  { char: "的", pinyin: "de", meaning: "possessive particle", category: "Grammar" },
+  { char: "了", pinyin: "le", meaning: "completed action particle", category: "Grammar" },
+  { char: "吗", pinyin: "ma", meaning: "question particle", category: "Grammar" },
+  { char: "呢", pinyin: "ne", meaning: "question particle", category: "Grammar" },
+  { char: "很", pinyin: "hěn", meaning: "very", category: "Grammar" },
+  { char: "太", pinyin: "tài", meaning: "too", category: "Grammar" },
+  { char: "都", pinyin: "dōu", meaning: "all, both", category: "Grammar" },
+  { char: "和", pinyin: "hé", meaning: "and", category: "Grammar" },
+  { char: "在", pinyin: "zài", meaning: "at, in, on", category: "Grammar" },
+  { char: "有", pinyin: "yǒu", meaning: "to have", category: "Verbs" },
+  { char: "没有", pinyin: "méiyǒu", meaning: "don't have", category: "Verbs" },
+  { char: "是", pinyin: "shì", meaning: "to be", category: "Verbs" },
+  { char: "叫", pinyin: "jiào", meaning: "to be called, to call", category: "Verbs" },
+  { char: "做", pinyin: "zuò", meaning: "to do, to make", category: "Verbs" },
+  { char: "去", pinyin: "qù", meaning: "to go", category: "Verbs" },
+  { char: "来", pinyin: "lái", meaning: "to come", category: "Verbs" },
+  { char: "回", pinyin: "huí", meaning: "to return", category: "Verbs" },
+  { char: "吃", pinyin: "chī", meaning: "to eat", category: "Verbs" },
+  { char: "喝", pinyin: "hē", meaning: "to drink", category: "Verbs" },
+  { char: "看", pinyin: "kàn", meaning: "to see, to watch, to read", category: "Verbs" },
+  { char: "听", pinyin: "tīng", meaning: "to listen", category: "Verbs" },
+  { char: "说", pinyin: "shuō", meaning: "to speak, to say", category: "Verbs" },
+  { char: "读", pinyin: "dú", meaning: "to read", category: "Verbs" },
+  { char: "写", pinyin: "xiě", meaning: "to write", category: "Verbs" },
+  { char: "买", pinyin: "mǎi", meaning: "to buy", category: "Verbs" },
+  { char: "开", pinyin: "kāi", meaning: "to open, to drive", category: "Verbs" },
+  { char: "关", pinyin: "guān", meaning: "to close", category: "Verbs" },
+  { char: "爱", pinyin: "ài", meaning: "to love", category: "Verbs" },
+  { char: "喜欢", pinyin: "xǐhuan", meaning: "to like", category: "Verbs" },
+  { char: "想", pinyin: "xiǎng", meaning: "to think, to want", category: "Verbs" },
+  { char: "认识", pinyin: "rènshi", meaning: "to know (someone)", category: "Verbs" },
+  { char: "会", pinyin: "huì", meaning: "can, to be able to", category: "Verbs" },
+  { char: "能", pinyin: "néng", meaning: "can, to be able to", category: "Verbs" },
+  { char: "可以", pinyin: "kěyǐ", meaning: "may, can", category: "Verbs" },
+  { char: "要", pinyin: "yào", meaning: "to want, to need", category: "Verbs" },
+  { char: "请", pinyin: "qǐng", meaning: "please, to invite", category: "Verbs" },
+  { char: "谢谢", pinyin: "xièxie", meaning: "thank you", category: "Verbs" },
+  { char: "不客气", pinyin: "bú kèqi", meaning: "you're welcome", category: "Verbs" },
+  { char: "对不起", pinyin: "duìbuqǐ", meaning: "sorry", category: "Verbs" },
+  { char: "没关系", pinyin: "méi guānxi", meaning: "it's okay", category: "Verbs" },
+  { char: "再见", pinyin: "zàijiàn", meaning: "goodbye", category: "Verbs" },
+  { char: "好", pinyin: "hǎo", meaning: "good", category: "Adjectives" },
+  { char: "大", pinyin: "dà", meaning: "big", category: "Adjectives" },
+  { char: "小", pinyin: "xiǎo", meaning: "small", category: "Adjectives" },
+  { char: "多", pinyin: "duō", meaning: "many, much", category: "Adjectives" },
+  { char: "少", pinyin: "shǎo", meaning: "few, little", category: "Adjectives" },
+  { char: "冷", pinyin: "lěng", meaning: "cold", category: "Adjectives" },
+  { char: "热", pinyin: "rè", meaning: "hot", category: "Adjectives" },
+  { char: "高兴", pinyin: "gāoxìng", meaning: "happy", category: "Adjectives" },
+  { char: "漂亮", pinyin: "piàoliang", meaning: "beautiful", category: "Adjectives" },
+  { char: "忙", pinyin: "máng", meaning: "busy", category: "Adjectives" },
+  { char: "累", pinyin: "lèi", meaning: "tired", category: "Adjectives" },
+  { char: "新", pinyin: "xīn", meaning: "new", category: "Adjectives" },
+  { char: "旧", pinyin: "jiù", meaning: "old (not age)", category: "Adjectives" },
+  { char: "贵", pinyin: "guì", meaning: "expensive", category: "Adjectives" },
+  { char: "便宜", pinyin: "piányi", meaning: "cheap", category: "Adjectives" },
+  { char: "长", pinyin: "cháng", meaning: "long", category: "Adjectives" },
+  { char: "高", pinyin: "gāo", meaning: "tall, high", category: "Adjectives" },
+  { char: "好", pinyin: "hǎo", meaning: "good", category: "Adjectives" },
+  { char: "对", pinyin: "duì", meaning: "correct", category: "Adjectives" },
+  { char: "错", pinyin: "cuò", meaning: "wrong", category: "Adjectives" },
+  { char: "白", pinyin: "bái", meaning: "white", category: "Colors" },
+  { char: "黑", pinyin: "hēi", meaning: "black", category: "Colors" },
+  { char: "红", pinyin: "hóng", meaning: "red", category: "Colors" },
+  { char: "人", pinyin: "rén", meaning: "person, people", category: "People" },
+  { char: "名字", pinyin: "míngzi", meaning: "name", category: "People" },
+  { char: "先生", pinyin: "xiānsheng", meaning: "Mr., husband", category: "People" },
+  { char: "小姐", pinyin: "xiǎojiě", meaning: "Miss", category: "People" },
+  { char: "朋友", pinyin: "péngyou", meaning: "friend", category: "People" },
+  { char: "妈妈", pinyin: "māma", meaning: "mother", category: "People" },
+  { char: "爸爸", pinyin: "bàba", meaning: "father", category: "People" },
+  { char: "儿子", pinyin: "érzi", meaning: "son", category: "People" },
+  { char: "女儿", pinyin: "nǚ'ér", meaning: "daughter", category: "People" },
+  { char: "老师", pinyin: "lǎoshī", meaning: "teacher", category: "People" },
+  { char: "学生", pinyin: "xuésheng", meaning: "student", category: "People" },
+  { char: "医生", pinyin: "yīshēng", meaning: "doctor", category: "People" },
+  { char: "年", pinyin: "nián", meaning: "year", category: "Time" },
+  { char: "月", pinyin: "yuè", meaning: "month", category: "Time" },
+  { char: "日", pinyin: "rì", meaning: "day, sun", category: "Time" },
+  { char: "星期", pinyin: "xīngqī", meaning: "week", category: "Time" },
+  { char: "天", pinyin: "tiān", meaning: "day, sky", category: "Time" },
+  { char: "今天", pinyin: "jīntiān", meaning: "today", category: "Time" },
+  { char: "昨天", pinyin: "zuótiān", meaning: "yesterday", category: "Time" },
+  { char: "明天", pinyin: "míngtiān", meaning: "tomorrow", category: "Time" },
+  { char: "早上", pinyin: "zǎoshang", meaning: "morning", category: "Time" },
+  { char: "中午", pinyin: "zhōngwǔ", meaning: "noon", category: "Time" },
+  { char: "晚上", pinyin: "wǎnshang", meaning: "evening", category: "Time" },
+  { char: "现在", pinyin: "xiànzài", meaning: "now", category: "Time" },
+  { char: "点", pinyin: "diǎn", meaning: "o'clock", category: "Time" },
+  { char: "分", pinyin: "fēn", meaning: "minute", category: "Time" },
+  { char: "时候", pinyin: "shíhou", meaning: "time, moment", category: "Time" },
+  { char: "家", pinyin: "jiā", meaning: "home, family", category: "Places" },
+  { char: "学校", pinyin: "xuéxiào", meaning: "school", category: "Places" },
+  { char: "饭店", pinyin: "fàndiàn", meaning: "restaurant", category: "Places" },
+  { char: "商店", pinyin: "shāngdiàn", meaning: "shop", category: "Places" },
+  { char: "医院", pinyin: "yīyuàn", meaning: "hospital", category: "Places" },
+  { char: "火车站", pinyin: "huǒchē zhàn", meaning: "train station", category: "Places" },
+  { char: "上", pinyin: "shàng", meaning: "up, on", category: "Places" },
+  { char: "下", pinyin: "xià", meaning: "down, under", category: "Places" },
+  { char: "前面", pinyin: "qiánmiàn", meaning: "front", category: "Places" },
+  { char: "后面", pinyin: "hòumiàn", meaning: "back", category: "Places" },
+  { char: "里", pinyin: "lǐ", meaning: "inside", category: "Places" },
+  { char: "外", pinyin: "wài", meaning: "outside", category: "Places" },
+  { char: "个", pinyin: "gè", meaning: "measure word", category: "Nouns" },
+  { char: "本", pinyin: "běn", meaning: "measure word for books", category: "Nouns" },
+  { char: "岁", pinyin: "suì", meaning: "years old", category: "Nouns" },
+  { char: "块", pinyin: "kuài", meaning: "piece, yuan", category: "Nouns" },
+  { char: "些", pinyin: "xiē", meaning: "some", category: "Nouns" },
+  { char: "钱", pinyin: "qián", meaning: "money", category: "Nouns" },
+  { char: "东西", pinyin: "dōngxi", meaning: "thing", category: "Nouns" },
+  { char: "水", pinyin: "shuǐ", meaning: "water", category: "Nouns" },
+  { char: "茶", pinyin: "chá", meaning: "tea", category: "Nouns" },
+  { char: "米饭", pinyin: "mǐfàn", meaning: "rice", category: "Nouns" },
+  { char: "菜", pinyin: "cài", meaning: "dish, vegetable", category: "Nouns" },
+  { char: "水果", pinyin: "shuǐguǒ", meaning: "fruit", category: "Nouns" },
+  { char: "苹果", pinyin: "píngguǒ", meaning: "apple", category: "Nouns" },
+  { char: "书", pinyin: "shū", meaning: "book", category: "Nouns" },
+  { char: "字", pinyin: "zì", meaning: "character", category: "Nouns" },
+  { char: "汉语", pinyin: "Hànyǔ", meaning: "Chinese language", category: "Nouns" },
+  { char: "话", pinyin: "huà", meaning: "speech, words", category: "Nouns" },
+  { char: "课", pinyin: "kè", meaning: "class, lesson", category: "Nouns" },
+  { char: "问题", pinyin: "wèntí", meaning: "question", category: "Nouns" },
+  { char: "意思", pinyin: "yìsi", meaning: "meaning", category: "Nouns" },
+  { char: "工作", pinyin: "gōngzuò", meaning: "work, job", category: "Nouns" },
+  { char: "猫", pinyin: "māo", meaning: "cat", category: "Nouns" },
+  { char: "狗", pinyin: "gǒu", meaning: "dog", category: "Nouns" },
+  { char: "衣服", pinyin: "yīfu", meaning: "clothes", category: "Nouns" },
+  { char: "电话", pinyin: "diànhuà", meaning: "telephone", category: "Nouns" },
+  { char: "电脑", pinyin: "diànnǎo", meaning: "computer", category: "Nouns" },
+  { char: "电视", pinyin: "diànshì", meaning: "TV", category: "Nouns" },
+  { char: "飞机", pinyin: "fēijī", meaning: "airplane", category: "Nouns" },
+  { char: "出租车", pinyin: "chūzū chē", meaning: "taxi", category: "Nouns" },
+  { char: "天气", pinyin: "tiānqì", meaning: "weather", category: "Nouns" },
+  { char: "雪", pinyin: "xuě", meaning: "snow", category: "Nouns" },
+  { char: "不", pinyin: "bù", meaning: "no, not", category: "Grammar" },
+  { char: "也", pinyin: "yě", meaning: "also", category: "Grammar" },
+  { char: "再", pinyin: "zài", meaning: "again", category: "Grammar" },
+  { char: "真", pinyin: "zhēn", meaning: "really", category: "Grammar" },
+];
+
+// Audio State
+let autoAudio = true;
+let slowAudio = false;
+let currentQuizType = 'visual';
+
+// Listen Quiz State
+let listenQuestions = [];
+let currentListenIndex = 0;
+let listenCorrect = 0;
+let listenTotal = 0;
+
+// State
+let currentCard = 0;
+let learned = new Set();
+let currentMode = 'flashcard';
+let quizQuestions = [];
+let currentQuizIndex = 0;
+let quizCorrect = 0;
+let quizTotal = 0;
+let activeCategory = 'All';
+
+// Speech Synthesis
+function getChineseVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  // Prefer Chinese voices: zh-CN, zh-TW, zh-HK
+  const zhVoices = voices.filter(v => v.lang && v.lang.startsWith('zh'));
+  if (zhVoices.length > 0) return zhVoices[0];
+  // Fallback: any voice
+  return voices[0] || null;
+}
+
+function speakWord(text, rate) {
+  if (!window.speechSynthesis) {
+    console.warn('Speech synthesis not supported');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'zh-CN';
+  utterance.rate = rate || (slowAudio ? 0.6 : 0.9);
+  utterance.pitch = 1;
+  const voice = getChineseVoice();
+  if (voice) utterance.voice = voice;
+  window.speechSynthesis.speak(utterance);
+}
+
+function speak(text) {
+  speakWord(text);
+}
+
+function toggleAutoAudio() {
+  autoAudio = !autoAudio;
+  document.getElementById('autoAudioToggle').classList.toggle('active', autoAudio);
+}
+
+function toggleSlowAudio() {
+  slowAudio = !slowAudio;
+  document.getElementById('slowAudioToggle').classList.toggle('active', slowAudio);
+}
+
+function playCurrentCard(e) {
+  if (e) e.stopPropagation();
+  const word = hsk1[currentCard];
+  speak(word.char);
+}
+
+function playQuizWord(e) {
+  if (e) e.stopPropagation();
+  const q = quizQuestions[currentQuizIndex];
+  if (q) speak(q.char);
+}
+
+function playListenWord(e) {
+  if (e) e.stopPropagation();
+  const q = listenQuestions[currentListenIndex];
+  if (q) speak(q.char);
+}
+
+function setQuizType(type, e) {
+  currentQuizType = type;
+  document.querySelectorAll('.quiz-type-btn').forEach(b => b.classList.remove('active'));
+  if (e) e.target.classList.add('active');
+  if (type === 'listen') {
+    document.getElementById('quizQuestion').style.display = 'none';
+    document.getElementById('quizHint').textContent = 'Listen and select the meaning';
+  } else {
+    document.getElementById('quizQuestion').style.display = 'block';
+    document.getElementById('quizHint').textContent = 'What does this character mean?';
+  }
+}
+
+// Ensure voices are loaded
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => getChineseVoice();
+}
+
+function shuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getCategories() {
+  const cats = new Set(hsk1.map(w => w.category));
+  return ['All', ...Array.from(cats).sort()];
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  document.getElementById('flashcardArea').style.display = mode === 'flashcard' ? 'flex' : 'none';
+  document.getElementById('quizArea').style.display = (mode === 'quiz' || mode === 'listen') ? 'flex' : 'none';
+  document.getElementById('listenArea').style.display = 'none';
+  document.getElementById('browseArea').style.display = mode === 'browse' ? 'block' : 'none';
+  document.getElementById('resultsArea').style.display = 'none';
+
+  if (mode === 'quiz') { setQuizType('visual'); startQuiz(); }
+  if (mode === 'listen') { document.getElementById('quizArea').style.display = 'none'; document.getElementById('listenArea').style.display = 'flex'; startListen(); }
+  if (mode === 'browse') renderBrowse();
+}
+
+// Flashcard functions
+function updateCard() {
+  const word = hsk1[currentCard];
+  document.getElementById('fcChar').textContent = word.char;
+  document.getElementById('fcCharBack').textContent = word.char;
+  document.getElementById('fcPinyin').textContent = word.pinyin;
+  document.getElementById('fcMeaning').textContent = word.meaning;
+  document.getElementById('fcCounter').textContent = `${currentCard + 1} / ${hsk1.length}`;
+  document.getElementById('fcProgress').style.width = `${((currentCard + 1) / hsk1.length) * 100}%`;
+  document.getElementById('flashcard').classList.remove('flipped');
+  if (autoAudio) {
+    setTimeout(() => speak(word.char), 300);
+  }
+}
+
+function flipCard() {
+  document.getElementById('flashcard').classList.toggle('flipped');
+}
+
+function nextCard(e) {
+  if (e) e.stopPropagation();
+  if (currentCard < hsk1.length - 1) {
+    currentCard++;
+    updateCard();
+  }
+}
+
+function prevCard(e) {
+  if (e) e.stopPropagation();
+  if (currentCard > 0) {
+    currentCard--;
+    updateCard();
+  }
+}
+
+function markCard(level, e) {
+  if (e) e.stopPropagation();
+  if (level === 'easy') {
+    learned.add(currentCard);
+    document.getElementById('learnedWords').textContent = learned.size;
+  }
+  nextCard();
+}
+
+// Quiz functions
+function startQuiz() {
+  quizQuestions = shuffle(hsk1).slice(0, 10);
+  currentQuizIndex = 0;
+  quizCorrect = 0;
+  quizTotal = 0;
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  const q = quizQuestions[currentQuizIndex];
+  document.getElementById('quizQuestion').textContent = q.char;
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  const options = [q];
+  const distractors = shuffle(hsk1.filter(w => w.meaning !== q.meaning)).slice(0, 3);
+  options.push(...distractors);
+  shuffle(options);
+
+  const optsDiv = document.getElementById('quizOptions');
+  optsDiv.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt.meaning;
+    btn.onclick = () => answerQuiz(opt, q);
+    optsDiv.appendChild(btn);
+  });
+
+  document.getElementById('quizProgress').style.width = `${(currentQuizIndex / quizQuestions.length) * 100}%`;
+
+  if (currentQuizType === 'listen') {
+    document.getElementById('quizQuestion').style.display = 'none';
+    setTimeout(() => speak(q.char), 400);
+  } else {
+    document.getElementById('quizQuestion').style.display = 'block';
+  }
+}
+
+function answerQuiz(selected, correct) {
+  const opts = document.querySelectorAll('.quiz-option');
+  opts.forEach(opt => {
+    opt.classList.add('disabled');
+    if (opt.textContent === correct.meaning) opt.classList.add('correct');
+    if (opt.textContent === selected.meaning && selected.meaning !== correct.meaning) opt.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quizFeedback');
+  if (selected.meaning === correct.meaning) {
+    fb.textContent = 'Correct!';
+    fb.className = 'quiz-feedback correct';
+    quizCorrect++;
+  } else {
+    fb.textContent = `The answer is: ${correct.pinyin} — ${correct.meaning}`;
+    fb.className = 'quiz-feedback wrong';
+  }
+  quizTotal++;
+
+  document.getElementById('quizScore').textContent = quizTotal > 0 ? `${Math.round((quizCorrect / quizTotal) * 100)}%` : '0%';
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+function nextQuiz() {
+  currentQuizIndex++;
+  if (currentQuizIndex >= quizQuestions.length) {
+    showResults();
+  } else {
+    showQuizQuestion();
+  }
+}
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'flex';
+  const pct = Math.round((quizCorrect / quizQuestions.length) * 100);
+  document.getElementById('scoreCircle').textContent = `${pct}%`;
+  document.getElementById('resultsText').textContent = `You answered ${quizCorrect} out of ${quizQuestions.length} correctly.`;
+}
+
+function restartQuiz() {
+  document.getElementById('resultsArea').style.display = 'none';
+  if (currentMode === 'listen') {
+    document.getElementById('listenArea').style.display = 'flex';
+    startListen();
+  } else {
+    document.getElementById('quizArea').style.display = 'flex';
+    startQuiz();
+  }
+}
+
+// Listen Quiz functions
+function startListen() {
+  listenQuestions = shuffle(hsk1).slice(0, 10);
+  currentListenIndex = 0;
+  listenCorrect = 0;
+  listenTotal = 0;
+  showListenQuestion();
+}
+
+function showListenQuestion() {
+  const q = listenQuestions[currentListenIndex];
+  document.getElementById('listenFeedback').textContent = '';
+  document.getElementById('listenFeedback').className = 'quiz-feedback';
+  document.getElementById('listenNextBtn').style.display = 'none';
+
+  const options = [q];
+  const distractors = shuffle(hsk1.filter(w => w.meaning !== q.meaning)).slice(0, 3);
+  options.push(...distractors);
+  shuffle(options);
+
+  const optsDiv = document.getElementById('listenOptions');
+  optsDiv.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt.meaning;
+    btn.onclick = () => answerListen(opt, q);
+    optsDiv.appendChild(btn);
+  });
+
+  document.getElementById('listenProgress').style.width = `${(currentListenIndex / listenQuestions.length) * 100}%`;
+  setTimeout(() => speak(q.char), 400);
+}
+
+function answerListen(selected, correct) {
+  const opts = document.querySelectorAll('#listenOptions .quiz-option');
+  opts.forEach(opt => {
+    opt.classList.add('disabled');
+    if (opt.textContent === correct.meaning) opt.classList.add('correct');
+    if (opt.textContent === selected.meaning && selected.meaning !== correct.meaning) opt.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('listenFeedback');
+  if (selected.meaning === correct.meaning) {
+    fb.textContent = 'Correct!';
+    fb.className = 'quiz-feedback correct';
+    listenCorrect++;
+  } else {
+    fb.textContent = `The answer is: ${correct.char} (${correct.pinyin}) — ${correct.meaning}`;
+    fb.className = 'quiz-feedback wrong';
+  }
+  listenTotal++;
+
+  document.getElementById('quizScore').textContent = listenTotal > 0 ? `${Math.round((listenCorrect / listenTotal) * 100)}%` : '0%';
+  document.getElementById('listenNextBtn').style.display = 'inline-block';
+}
+
+function nextListen() {
+  currentListenIndex++;
+  if (currentListenIndex >= listenQuestions.length) {
+    showListenResults();
+  } else {
+    showListenQuestion();
+  }
+}
+
+function showListenResults() {
+  document.getElementById('listenArea').style.display = 'none';
+  document.getElementById('resultsArea').style.display = 'flex';
+  const pct = Math.round((listenCorrect / listenQuestions.length) * 100);
+  document.getElementById('scoreCircle').textContent = `${pct}%`;
+  document.getElementById('resultsText').textContent = `You answered ${listenCorrect} out of ${listenQuestions.length} correctly.`;
+}
+
+// Browse functions
+function renderBrowse() {
+  const cats = getCategories();
+  const filterDiv = document.getElementById('categoryFilter');
+  filterDiv.innerHTML = '';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (cat === activeCategory ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => { activeCategory = cat; renderBrowse(); };
+    filterDiv.appendChild(btn);
+  });
+
+  const words = activeCategory === 'All' ? hsk1 : hsk1.filter(w => w.category === activeCategory);
+  const grid = document.getElementById('wordGrid');
+  grid.innerHTML = '';
+  words.forEach((word, idx) => {
+    const card = document.createElement('div');
+    card.className = 'word-card';
+    card.innerHTML = `
+      <div class="w-char">${word.char}</div>
+      <div class="w-pinyin">${word.pinyin}</div>
+      <div class="w-meaning hidden" onclick="event.stopPropagation(); this.classList.toggle('hidden')">${word.meaning}</div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:8px;">
+        <button class="audio-btn" style="width:32px;height:32px;font-size:0.85rem;margin:0;" onclick="event.stopPropagation(); speakWord('${word.char}')" title="Play">&#128266;</button>
+      </div>
+    `;
+    card.onclick = () => {
+      card.querySelector('.w-meaning').classList.toggle('hidden');
+    };
+    grid.appendChild(card);
+  });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (currentMode === 'flashcard') {
+    if (e.key === 'ArrowRight') nextCard();
+    if (e.key === 'ArrowLeft') prevCard();
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+    if (e.key === 'a' || e.key === 'A') { e.preventDefault(); playCurrentCard(); }
+  }
+  if (currentMode === 'quiz' && currentQuizType === 'listen') {
+    if (e.key === 'a' || e.key === 'A') { e.preventDefault(); playQuizWord(); }
+  }
+  if (currentMode === 'listen') {
+    if (e.key === 'a' || e.key === 'A') { e.preventDefault(); playListenWord(); }
+  }
+});
+
+// Init
+updateCard();
+</script>
+</body>
+</html>
